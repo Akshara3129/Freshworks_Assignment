@@ -9,16 +9,20 @@ def create(key, value, ttl=0):
     if not os.path.exists('D:/Freshworks/DataStore.txt'):
 
         #lock to prevent more than one client process from using same file as a data store at any given time 
-        with open("DataStore.txt", "w") as write_file:
-            portalocker.lock(write_file, portalocker.LOCK_EX)
-            if(ttl==0):
-                li = [value,ttl]
-                json.dump({key:li}, write_file)
-            else:
-                li = [value, time.time()+ttl]
-                json.dump({key:li}, write_file)
+        try:
+            with open("DataStore.txt", "w") as write_file:
+                portalocker.lock(write_file, portalocker.LOCK_EX)
+                if(ttl==0):
+                    li = [value,ttl]
+                    json.dump({key:li}, write_file)
+                else:
+                    li = [value, time.time()+ttl]
+                    json.dump({key:li}, write_file)
 
-            portalocker.unlock(write_file)
+                portalocker.unlock(write_file)
+        except IOError:
+            time.sleep(0.05)
+
         print("Success: Key-value pair added successfully.")
 
     #if the specified path exists, add in that location
@@ -34,7 +38,7 @@ def create(key, value, ttl=0):
             print("\nValue-out-of-bounds Error: Preferred Size of value exceeded.")
         elif(len(key)>32):
             print("Key-length exceeded Error: Must be capped at 32chars.")
-        elif(key.isalpha()==0):
+        elif(key.isalpha()==False):
             print("Key-type error: Must contain only Alphabets.")
         else:
             if(ttl==0):
@@ -45,10 +49,13 @@ def create(key, value, ttl=0):
                 data[key] = ListValue
                 print("\nSuccess: Key-value pair added successfully.")
 
-            with open('D:/Freshworks/DataStore.txt', 'w') as fi:
-                portalocker.lock(fi, portalocker.LOCK_EX)
-                json.dump(data, fi)
-                portalocker.unlock(fi)
+            try:
+                with open('D:/Freshworks/DataStore.txt', 'w') as fi:
+                    portalocker.lock(fi, portalocker.LOCK_EX)
+                    json.dump(data, fi)
+                    portalocker.unlock(fi)
+            except IOError:
+                time.sleep(0.05)
 
 
 def read(key):
@@ -68,8 +75,7 @@ def read(key):
                     print("\nKey-expire condition: Time-to-live of ",key,"has expired.")
     except:
         print("No-data-Error: Data store might not consist/ might not be initialised with any data.")
-        
-        
+
 def delete(key):
     try:
         with open('D:/Freshworks/DataStore.txt') as file:
@@ -87,10 +93,13 @@ def delete(key):
                     print("\nSuccess: Key-value pair deleted successfully.")
                 else:
                     print("\nKey-expire condition: Time-to-live of",key,"has expired.")
-
-            with open('D:/Freshworks/DataStore.txt', 'w') as fi:
+            try:
+                with open('D:/Freshworks/DataStore.txt', 'w') as fi:
                     portalocker.lock(fi, portalocker.LOCK_EX)
                     json.dump(data, fi)
                     portalocker.unlock(fi)
+            except IOError:
+                time.sleep(0.05)
+
     except:
         print("No-data-Error: Data store might not consist/ might not be initialised with any data.")
