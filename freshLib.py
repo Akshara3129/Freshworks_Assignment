@@ -68,6 +68,8 @@ def read(key):
                     print("\nKey-expire condition: Time-to-live of ",key,"has expired.")
     except:
         print("No-data-Error: Data store might not consist/ might not be initialised with any data.")
+        
+        
 def delete(key):
     try:
         with open('D:/Freshworks/DataStore.txt') as file:
